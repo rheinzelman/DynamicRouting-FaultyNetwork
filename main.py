@@ -16,23 +16,6 @@ def gen_weighted_adj_matrix(rows, cols):
             if r > 0: M[i - cols, i] = M[i, i - cols] = random.randint(1,10)
     return M
 
-adj_matrix = gen_weighted_adj_matrix(5, 5)
-
-g = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
-
-def print_result(previous_nodes, shortest_path, start_node, target_node):
-    path = []
-    node = target_node
-
-    while node != start_node:
-        path.append(node)
-        node = previous_nodes[node]
-
-    # Add the start node manually
-    path.append(start_node)
-    print("We found the following best path with a value of {}.".format(shortest_path[target_node]))
-    print(" -> ", path)
-
 def dijkstra(graph, start_node):
     unvisited_nodes = ig.VertexSeq(graph).indices
     shortest_path = {}
@@ -62,15 +45,34 @@ def dijkstra(graph, start_node):
 
     return previous_nodes, shortest_path
 
-previous_nodes, shortest_path = dijkstra(g, 0)
-print("previous nodes")
-print(previous_nodes.keys())
-print(previous_nodes.values())
-print("shortest path")
-print(shortest_path.keys())
-print(shortest_path.values())
-print_result(previous_nodes, shortest_path, start_node=0, target_node=19)
+def get_shortest_path(previous_nodes, shortest_path, start_node, target_node):
+    path = []
+    node = target_node
 
+    while node != start_node:
+        path.append(node)
+        node = previous_nodes[node]
+
+    # Add the start node manually
+    path.append(start_node)
+    print("We found the following best path with a value of {}.".format(shortest_path[target_node]))
+    print(" -> ", path)
+    return path
+
+rows = 10
+cols = rows
+
+start_node = 0
+target_node = 75
+
+adj_matrix = gen_weighted_adj_matrix(rows, cols)
+g = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
+
+previous_nodes, shortest_path = dijkstra(g, 0)
+path = get_shortest_path(previous_nodes, shortest_path, start_node=start_node, target_node=target_node)
+print(path)
+for node in path:
+    g.vs[node]["color"] = "blue"
 
 fig, ax = plt.subplots(figsize=(10, 10))
 ig.plot(
