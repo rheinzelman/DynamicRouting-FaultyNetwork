@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import igraph as ig
 import random
 
-def gen_weighted_adj_matrix(rows, cols):
+def gen_weighted_adj_matrix(rows, cols, min_dist, max_dist):
     n = rows * cols
     M = np.zeros((n, n))
     for r in list(range(rows)):
@@ -16,13 +16,13 @@ def gen_weighted_adj_matrix(rows, cols):
             if r > 0: M[i - cols, i] = M[i, i - cols] = random.randint(1,10)
     return M
 
-def dijkstra(graph, start_node):
+def dijkstra(graph, start_node, max_dist):
+    # initialization
     unvisited_nodes = ig.VertexSeq(graph).indices
     shortest_path = {}
     previous_nodes = {}
-    max_value = sys.maxsize
     for node in unvisited_nodes:
-        shortest_path[node] = max_value
+        shortest_path[node] = float('inf')
     shortest_path[start_node] = 0
 
     while unvisited_nodes:
@@ -59,35 +59,69 @@ def get_shortest_path(previous_nodes, shortest_path, start_node, target_node):
     print(" -> ", path)
     return path
 
+def delete_node_on_path(graph, path):
+    node_index = random.choice(path[1:len(path)-1])
+    edges = graph.vs[node_index].all_edges()
+    graph.delete_edges(edges)
+    return node_index
+
+# min and max distances in the graph
+min_dist = 1
+max_dist = 10
+
+# number of iterations where one node along the shortest path is deleted
+iterations = 25
+
+# rows and columns must be equal
 rows = 10
 cols = rows
 
+# defining the search nodes
 start_node = 0
-target_node = 75
+target_node = 99
 
-adj_matrix = gen_weighted_adj_matrix(rows, cols)
+# this is kept track of for coloring purposes
+disconnected_nodes = []
+
+# generate the adjacency matrix used to create the graph
+adj_matrix = gen_weighted_adj_matrix(rows, cols, min_dist, max_dist)
+# instantiate an igraph graph through our adjacency matrix
 g = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
 
-previous_nodes, shortest_path = dijkstra(g, 0)
-path = get_shortest_path(previous_nodes, shortest_path, start_node=start_node, target_node=target_node)
-print(path)
-for node in path:
-    g.vs[node]["color"] = "blue"
+for i in range(iterations):
+    g.vs["color"] = "black"
+    # get the list of prev nodes and the shortest path for each from the dijkstra function
+    previous_nodes, shortest_path = dijkstra(g, 0, max_dist)
+    # get the shortest node path from our start_node to our target_node
+    try:
+        path = get_shortest_path(previous_nodes, shortest_path, start_node=start_node, target_node=target_node)
+    except:
+        print("No possible path to the target node")
+        break
+    print(path)
+    # color each node in the path
+    for node in path:
+        g.vs[node]["color"] = "green"
+    for node in disconnected_nodes:
+        g.vs[node]["color"] = "red"
 
-fig, ax = plt.subplots(figsize=(10, 10))
-ig.plot(
-    g,
-    target=ax,
-    layout="grid",
-    #layout="fruchterman_reingold",  # print nodes in a circular layout
-    edge_label=g.es["weight"],
-    vertex_size=.25,
-    vertex_shape='rectangle',
-    vertex_frame_width=1.0,
-    vertex_frame_color="white",
-    vertex_label_size=7.0,
-    bbox=(1024, 1024),
-    margin=10
-)
-plt.savefig("fig")
-plt.show()
+    fig, ax = plt.subplots(figsize=(10, 10))
+    ig.plot(
+        g,
+        target=ax,
+        layout="grid",
+        #layout="fruchterman_reingold",  # print nodes in a circular layout
+        edge_label=g.es["weight"],
+        vertex_size=.5,
+        vertex_shape='rectangle',
+        vertex_frame_width=1.0,
+        vertex_frame_color="white",
+        vertex_label_size=7.0,
+        bbox=(1024, 1024),
+        margin=10
+    )
+    plt.show()
+    fig_name = str(i) + ".png"
+    plt.savefig(fig_name)
+    disconnected_nodes.append(delete_node_on_path(g, path))
+    g.vs["color"] = "black"
