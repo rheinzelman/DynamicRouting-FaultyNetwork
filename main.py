@@ -16,48 +16,39 @@ def gen_weighted_adj_matrix(rows, cols, min_dist, max_dist):
             if r > 0: M[i - cols, i] = M[i, i - cols] = random.randint(1,10)
     return M
 
-def dijkstra(graph, start_node, max_dist):
+def dijkstra(start_vertex, final_vertex, g):
     # initialization
-    unvisited_nodes = ig.VertexSeq(graph).indices
-    shortest_path = {}
-    previous_nodes = {}
-    for node in unvisited_nodes:
-        shortest_path[node] = float('inf')
-    shortest_path[start_node] = 0
+    dist = {}
+    prev = {}
+    vertices = ig.VertexSeq(g).indices
+    # initialization: set all min distances to be infinity, and set the distance of the start node to 0
+    for vertex in vertices:
+        dist[vertex] = float('inf')
+    dist[start_node] = 0
+    # traverse through unvisited vertices
+    while vertices:
+        # set the minimum
+        min_dist_vertex = vertices[0]
+        vertices.remove(min_dist_vertex)
+        for vertex in g.neighbors(min_dist_vertex):
+            if dist[vertex] < dist[min_dist_vertex]:
+                min_dist_vertex = vertex
+        for vertex in g.neighbors(min_dist_vertex):
+            # get the weight through igraph's select
+            # indexing 0 because otherwise it will return a list
+            cost = dist[min_dist_vertex] + g.es.select(_source=min_dist_vertex, _target=vertex)['weight'][0]
+            if cost < dist[vertex]:
+                dist[vertex] = cost
+                prev[vertex] = min_dist_vertex
 
-    while unvisited_nodes:
-        current_min_node = None
-        for node in unvisited_nodes:
-            if current_min_node == None:
-                current_min_node = node
-            elif shortest_path[node] < shortest_path[current_min_node]:
-                current_min_node = node
+    shortest_path = []
+    vertex = final_vertex
+    while vertex != start_vertex:
+        shortest_path.append(vertex)
+        vertex = prev[vertex]
 
-        neighbors = graph.neighbors(current_min_node)
-        for neighbor in neighbors:
-            # getting index of 0 because graph.es.select returns a list even if it is size zero
-            tentative_value = shortest_path[current_min_node] + graph.es.select(_source=current_min_node, _target=neighbor)['weight'][0]
-            if tentative_value < shortest_path[neighbor]:
-                shortest_path[neighbor] = tentative_value
-                previous_nodes[neighbor] = current_min_node
-
-        unvisited_nodes.remove(current_min_node)
-
-    return previous_nodes, shortest_path
-
-def get_shortest_path(previous_nodes, shortest_path, start_node, target_node):
-    path = []
-    node = target_node
-
-    while node != start_node:
-        path.append(node)
-        node = previous_nodes[node]
-
-    # Add the start node manually
-    path.append(start_node)
-    print("We found the following best path with a value of {}.".format(shortest_path[target_node]))
-    print(" -> ", path)
-    return path
+    shortest_path.append(start_vertex)
+    return shortest_path
 
 def delete_node_on_path(graph, path):
     node_index = random.choice(path[1:len(path)-1])
@@ -90,11 +81,10 @@ g = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
 
 for i in range(iterations):
     g.vs["color"] = "black"
-    # get the list of prev nodes and the shortest path for each from the dijkstra function
-    previous_nodes, shortest_path = dijkstra(g, 0, max_dist)
     # get the shortest node path from our start_node to our target_node
     try:
-        path = get_shortest_path(previous_nodes, shortest_path, start_node=start_node, target_node=target_node)
+        # call dijkstra's to generate the shortest path
+        path = dijkstra(start_node, target_node, g)
     except:
         print("No possible path to the target node")
         break
