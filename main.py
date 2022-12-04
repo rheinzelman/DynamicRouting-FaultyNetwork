@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import igraph as ig
 import random
-import math
 
 def gen_weighted_adj_matrix(rows, cols, min_dist, max_dist):
     n = rows * cols
@@ -57,35 +56,16 @@ def delete_node_on_path(graph, path):
     graph.delete_edges(edges)
     return node_index
 
-def delete_node_probability(graph, connectivity_matrix, p, cols):
-    deleted_nodes = []
-    for i in range(len(connectivity_matrix)):
-        for j in range(len(connectivity_matrix[0])):
-            if(p < connectivity_matrix[cols - 1 - i, j]):
-                graph.delete_edges(graph.vs[(cols*i) + j].all_edges())
-                deleted_nodes.append((cols*i) + j)
-    return deleted_nodes
-
-def node_connectivity(rows, cols):
-    connectivity_matrix = np.zeros((rows,cols))
-    for row in range(rows):
-        for col in range(cols):
-            connectivity_matrix[row, col] = np.random.random()
-    return connectivity_matrix
-
-
 # min and max distances in the graph
 min_dist = 1
 max_dist = 10
 
 # number of iterations where one node along the shortest path is deleted
-iterations = 5
+iterations = 25
 
 # rows and columns must be equal
 rows = 10
 cols = rows
-
-connectivity_matrix = node_connectivity(rows, cols)
 
 # defining the search nodes
 start_node = 0
@@ -96,23 +76,19 @@ disconnected_nodes = []
 
 # generate the adjacency matrix used to create the graph
 adj_matrix = gen_weighted_adj_matrix(rows, cols, min_dist, max_dist)
+# instantiate an igraph graph through our adjacency matrix
+g = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
 
-for i in np.arange(0.5, 1, .025):
-    # instantiate an igraph graph through our adjacency matrix
-    g = ig.Graph.Weighted_Adjacency(adj_matrix, "max")
-    disconnected_nodes = delete_node_probability(g, connectivity_matrix, i, cols)
+for i in range(iterations):
     g.vs["color"] = "black"
     # get the shortest node path from our start_node to our target_node
     try:
         # call dijkstra's to generate the shortest path
         path = dijkstra(start_node, target_node, g)
-        if(not previous_nodes == {} and not shortest_path == {}):
-            path = get_shortest_path(previous_nodes, shortest_path, start_node=start_node, target_node=target_node)
-        else:
-            print("No possible path to the target node")
-            path = []
     except:
-        pass
+        print("No possible path to the target node")
+        break
+    print(path)
     # color each node in the path
     for node in path:
         g.vs[node]["color"] = "green"
@@ -135,4 +111,7 @@ for i in np.arange(0.5, 1, .025):
         margin=10
     )
     plt.show()
+    fig_name = str(i) + ".png"
+    plt.savefig(fig_name)
+    disconnected_nodes.append(delete_node_on_path(g, path))
     g.vs["color"] = "black"
