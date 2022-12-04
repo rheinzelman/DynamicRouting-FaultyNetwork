@@ -50,11 +50,17 @@ def dijkstra(start_vertex, final_vertex, g):
     shortest_path.append(start_vertex)
     return shortest_path
 
-def delete_node_on_path(graph, path):
+def delete_vertex_on_path(graph, path):
     node_index = random.choice(path[1:len(path)-1])
     edges = graph.vs[node_index].all_edges()
     graph.delete_edges(edges)
     return node_index
+
+def delete_edge_bernoulli(graph, p):
+    edges_to_delete = graph.es.select(weight_lt=p)
+    graph.delete_edges(edges_to_delete)
+    return edges_to_delete
+
 
 # min and max distances in the graph
 min_dist = 1
@@ -77,31 +83,71 @@ disconnected_nodes = []
 # generate the adjacency matrix used to create the graph
 adj_matrix = gen_weighted_adj_matrix(rows, cols, min_dist, max_dist)
 # instantiate an igraph graph through our adjacency matrix
-g = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
+# g_1 = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
+#
+# for i in range(iterations):
+#     g_1.vs["color"] = "blue"
+#     # get the shortest node path from our start_node to our target_node
+#     try:
+#         # call dijkstra's to generate the shortest path
+#         path = dijkstra(start_node, target_node, g_1)
+#     except:
+#         print("No possible path to the target node")
+#         break
+#     print(path)
+#     # color each node in the path
+#     for node in path:
+#         g_1.vs[node]["color"] = "green"
+#     for node in disconnected_nodes:
+#         g_1.vs[node]["color"] = "red"
+#
+#     fig, ax = plt.subplots(figsize=(10, 10))
+#     ig.plot(
+#         g_1,
+#         target=ax,
+#         layout="grid",
+#         # layout="fruchterman_reingold",  # print nodes in a circular layout
+#         edge_label=g_1.es["weight"],
+#         vertex_size=.5,
+#         vertex_shape='rectangle',
+#         vertex_frame_width=1.0,
+#         vertex_frame_color="white",
+#         vertex_label_size=7.0,
+#         bbox=(1024, 1024),
+#         margin=10
+#     )
+#     plt.show()
+#     fig_name = str(i) + ".png"
+#     plt.savefig(fig_name)
+#     disconnected_nodes.append(delete_vertex_on_path(g_1, path))
+#     g_1.vs["color"] = "blue"
+
+g_2 = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
 
 for i in range(iterations):
-    g.vs["color"] = "black"
+    p = (max_dist/iterations) * i
+    g_2.vs["color"] = "blue"
     # get the shortest node path from our start_node to our target_node
     try:
         # call dijkstra's to generate the shortest path
-        path = dijkstra(start_node, target_node, g)
+        path = dijkstra(start_node, target_node, g_2)
     except:
         print("No possible path to the target node")
         break
     print(path)
     # color each node in the path
     for node in path:
-        g.vs[node]["color"] = "green"
+        g_2.vs[node]["color"] = "green"
     for node in disconnected_nodes:
-        g.vs[node]["color"] = "red"
+        g_2.vs[node]["color"] = "red"
 
     fig, ax = plt.subplots(figsize=(10, 10))
     ig.plot(
-        g,
+        g_2,
         target=ax,
         layout="grid",
-        #layout="fruchterman_reingold",  # print nodes in a circular layout
-        edge_label=g.es["weight"],
+        # layout="fruchterman_reingold",  # print nodes in a circular layout
+        edge_label=g_2.es["weight"],
         vertex_size=.5,
         vertex_shape='rectangle',
         vertex_frame_width=1.0,
@@ -113,5 +159,8 @@ for i in range(iterations):
     plt.show()
     fig_name = str(i) + ".png"
     plt.savefig(fig_name)
-    disconnected_nodes.append(delete_node_on_path(g, path))
-    g.vs["color"] = "black"
+    disconnected_vertices = delete_edge_bernoulli(g_2, p)
+    disconnected_nodes.append(disconnected_vertices)
+    g_2.vs["color"] = "blue"
+
+
