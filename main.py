@@ -16,6 +16,13 @@ def gen_weighted_adj_matrix(rows, cols, min_dist, max_dist):
             if r > 0: M[i - cols, i] = M[i, i - cols] = random.randint(1,10)
     return M
 
+def gen_probability_matrix(rows, min_p, max_p):
+    M = np.zeros((rows, rows))
+    for i in range(rows):
+        for j in range(rows):
+            M[i][j] = np.random.randint(min_p, max_p)
+    return M
+
 def dijkstra(start_vertex, final_vertex, g):
     # initialization
     dist = {}
@@ -56,15 +63,19 @@ def delete_vertex_on_path(graph, path):
     graph.delete_edges(edges)
     return node_index
 
-def delete_edge_bernoulli(graph, p):
-    edges_to_delete = graph.es.select(weight_lt=p)
-    graph.delete_edges(edges_to_delete)
-    return edges_to_delete
-
+def delete_node_bernoulli(graph, rows, p_matrix, p):
+    deleted_vertices = []
+    for i in range(rows):
+        for j in range(rows):
+            if(p_matrix[i][j] < p):
+                edges = graph.vs[rows*i+j].all_edges()
+                graph.delete_edges(edges)
+                deleted_vertices.append(rows*i+j)
+    return deleted_vertices
 
 # min and max distances in the graph
 min_dist = 1
-max_dist = 10
+max_dist = 100
 
 # number of iterations where one node along the shortest path is deleted
 iterations = 25
@@ -122,10 +133,17 @@ adj_matrix = gen_weighted_adj_matrix(rows, cols, min_dist, max_dist)
 #     disconnected_nodes.append(delete_vertex_on_path(g_1, path))
 #     g_1.vs["color"] = "blue"
 
+iterations = max_dist
+p = 1
+
+deleted_vertices = []
+
 g_2 = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
+g_2_p_matrix = gen_probability_matrix(rows, min_dist, max_dist)
+print(g_2_p_matrix)
 
 for i in range(iterations):
-    p = (max_dist/iterations) * i
+    p += 1
     g_2.vs["color"] = "blue"
     # get the shortest node path from our start_node to our target_node
     try:
@@ -136,10 +154,10 @@ for i in range(iterations):
         break
     print(path)
     # color each node in the path
-    for node in path:
-        g_2.vs[node]["color"] = "green"
-    for node in disconnected_nodes:
-        g_2.vs[node]["color"] = "red"
+    for vertex in path:
+        g_2.vs[vertex]["color"] = "green"
+    for vertex in deleted_vertices:
+        g_2.vs[vertex]["color"] = "red"
 
     fig, ax = plt.subplots(figsize=(10, 10))
     ig.plot(
@@ -159,8 +177,8 @@ for i in range(iterations):
     plt.show()
     fig_name = str(i) + ".png"
     plt.savefig(fig_name)
-    disconnected_vertices = delete_edge_bernoulli(g_2, p)
-    disconnected_nodes.append(disconnected_vertices)
+    deleted_vertices = delete_node_bernoulli(g_2, rows, g_2_p_matrix, p)
+    print(deleted_vertices)
     g_2.vs["color"] = "blue"
 
 
