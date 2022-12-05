@@ -11,16 +11,16 @@ def gen_weighted_adj_matrix(rows, cols, min_dist, max_dist):
         for c in list(range(cols)):
             i = r * cols + c
             # Two inner diagonals
-            if c > 0: M[i - 1, i] = M[i, i - 1] = random.randint(1,10)
+            if c > 0: M[i - 1, i] = M[i, i - 1] = random.randint(min_dist,max_dist)
             # Two outer diagonals
-            if r > 0: M[i - cols, i] = M[i, i - cols] = random.randint(1,10)
+            if r > 0: M[i - cols, i] = M[i, i - cols] = random.randint(min_dist,max_dist)
     return M
 
-def gen_probability_matrix(rows, min_p, max_p):
+def gen_probability_matrix(rows):
     M = np.zeros((rows, rows))
     for i in range(rows):
         for j in range(rows):
-            M[i][j] = np.random.randint(min_p, max_p)
+            M[i][j] = np.random.uniform(0, 1)
     return M
 
 def dijkstra(start_vertex, final_vertex, g):
@@ -133,17 +133,18 @@ adj_matrix = gen_weighted_adj_matrix(rows, cols, min_dist, max_dist)
 #     disconnected_nodes.append(delete_vertex_on_path(g_1, path))
 #     g_1.vs["color"] = "blue"
 
-iterations = max_dist
-p = 1
+iterations = 10
+p = 0
 
 deleted_vertices = []
 
 g_2 = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
-g_2_p_matrix = gen_probability_matrix(rows, min_dist, max_dist)
+g_2_p_matrix = gen_probability_matrix(rows)
+
 print(g_2_p_matrix)
 
 for i in range(iterations):
-    p += 1
+    p += 1/iterations
     g_2.vs["color"] = "blue"
     # get the shortest node path from our start_node to our target_node
     try:
@@ -152,7 +153,7 @@ for i in range(iterations):
     except:
         print("No possible path to the target node")
         break
-    print(path)
+    print("Shortest path from {} to {}:\n{}".format(start_node,target_node,path))
     # color each node in the path
     for vertex in path:
         g_2.vs[vertex]["color"] = "green"
@@ -162,6 +163,7 @@ for i in range(iterations):
     fig, ax = plt.subplots(figsize=(10, 10))
     ig.plot(
         g_2,
+        label_size = 25,
         target=ax,
         layout="grid",
         # layout="fruchterman_reingold",  # print nodes in a circular layout
@@ -178,7 +180,6 @@ for i in range(iterations):
     fig_name = str(i) + ".png"
     plt.savefig(fig_name)
     deleted_vertices = delete_node_bernoulli(g_2, rows, g_2_p_matrix, p)
-    print(deleted_vertices)
     g_2.vs["color"] = "blue"
 
 
