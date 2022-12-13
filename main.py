@@ -88,86 +88,44 @@ cols = rows
 start_node = 0
 target_node = 99
 
+#
+# to see both, uncomment bernoulli section
+#
+
+#######################
+# start of path based #
+#######################
+
 # this is kept track of for coloring purposes
 disconnected_nodes = []
 
 # generate the adjacency matrix used to create the graph
 adj_matrix = gen_weighted_adj_matrix(rows, cols, min_dist, max_dist)
 # instantiate an igraph graph through our adjacency matrix
-# g_1 = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
-#
-# for i in range(iterations):
-#     g_1.vs["color"] = "blue"
-#     # get the shortest node path from our start_node to our target_node
-#     try:
-#         # call dijkstra's to generate the shortest path
-#         path = dijkstra(start_node, target_node, g_1)
-#     except:
-#         print("No possible path to the target node")
-#         break
-#     print(path)
-#     # color each node in the path
-#     for node in path:
-#         g_1.vs[node]["color"] = "green"
-#     for node in disconnected_nodes:
-#         g_1.vs[node]["color"] = "red"
-#
-#     fig, ax = plt.subplots(figsize=(10, 10))
-#     ig.plot(
-#         g_1,
-#         target=ax,
-#         layout="grid",
-#         # layout="fruchterman_reingold",  # print nodes in a circular layout
-#         edge_label=g_1.es["weight"],
-#         vertex_size=.5,
-#         vertex_shape='rectangle',
-#         vertex_frame_width=1.0,
-#         vertex_frame_color="white",
-#         vertex_label_size=7.0,
-#         bbox=(1024, 1024),
-#         margin=10
-#     )
-#     plt.show()
-#     fig_name = str(i) + ".png"
-#     plt.savefig(fig_name)
-#     disconnected_nodes.append(delete_vertex_on_path(g_1, path))
-#     g_1.vs["color"] = "blue"
-
-iterations = 10
-p = 0
-
-deleted_vertices = []
-
-g_2 = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
-g_2_p_matrix = gen_probability_matrix(rows)
-
-print(g_2_p_matrix)
+g_1 = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
 
 for i in range(iterations):
-    p += 1/iterations
-    g_2.vs["color"] = "blue"
+    g_1.vs["color"] = "blue"
     # get the shortest node path from our start_node to our target_node
     try:
         # call dijkstra's to generate the shortest path
-        path = dijkstra(start_node, target_node, g_2)
+        path = dijkstra(start_node, target_node, g_1)
     except:
         print("No possible path to the target node")
         break
-    print("Shortest path from {} to {}:\n{}".format(start_node,target_node,path))
     # color each node in the path
-    for vertex in path:
-        g_2.vs[vertex]["color"] = "green"
-    for vertex in deleted_vertices:
-        g_2.vs[vertex]["color"] = "red"
+    for node in path:
+        g_1.vs[node]["color"] = "green"
+    for node in disconnected_nodes:
+        g_1.vs[node]["color"] = "red"
 
     fig, ax = plt.subplots(figsize=(10, 10))
     ig.plot(
-        g_2,
-        label_size = 25,
+        g_1,
         target=ax,
         layout="grid",
         # layout="fruchterman_reingold",  # print nodes in a circular layout
-        edge_label=g_2.es["weight"],
+        edge_label=g_1.es["weight"],
         vertex_size=.5,
         vertex_shape='rectangle',
         vertex_frame_width=1.0,
@@ -179,7 +137,60 @@ for i in range(iterations):
     plt.show()
     fig_name = str(i) + ".png"
     plt.savefig(fig_name)
-    deleted_vertices = delete_node_bernoulli(g_2, rows, g_2_p_matrix, p)
-    g_2.vs["color"] = "blue"
+    disconnected_nodes.append(delete_vertex_on_path(g_1, path))
+    g_1.vs["color"] = "blue"
+
+######################
+# start of bernoulli #
+######################
+#
+# iterations = 10
+# p = 0
+#
+# deleted_vertices = []
+#
+# g_2 = ig.Graph.Weighted_Adjacency(adj_matrix, "min")
+# g_2_p_matrix = gen_probability_matrix(rows)
+#
+# print(g_2_p_matrix)
+#
+# for i in range(iterations):
+#     p += 1/iterations/2
+#     g_2.vs["color"] = "blue"
+#     # get the shortest node path from our start_node to our target_node
+#     try:
+#         # call dijkstra's to generate the shortest path
+#         path = dijkstra(start_node, target_node, g_2)
+#     except:
+#         print("No possible path to the target node")
+#         break
+#     print("Shortest path from {} to {}:\n{}".format(start_node,target_node,path))
+#     # color each node in the path
+#     for vertex in path:
+#         g_2.vs[vertex]["color"] = "green"
+#     for vertex in deleted_vertices:
+#         g_2.vs[vertex]["color"] = "red"
+#
+#     fig, ax = plt.subplots(figsize=(10, 10))
+#     ig.plot(
+#         g_2,
+#         label_size = 25,
+#         target=ax,
+#         layout="grid",
+#         # layout="fruchterman_reingold",  # print nodes in a circular layout
+#         edge_label=g_2.es["weight"],
+#         vertex_size=.5,
+#         vertex_shape='rectangle',
+#         vertex_frame_width=1.0,
+#         vertex_frame_color="white",
+#         vertex_label_size=7.0,
+#         bbox=(1024, 1024),
+#         margin=10
+#     )
+#     plt.show()
+#     fig_name = str(i) + ".png"
+#     plt.savefig(fig_name)
+#     deleted_vertices = delete_node_bernoulli(g_2, rows, g_2_p_matrix, p)
+#     g_2.vs["color"] = "blue"
 
 
