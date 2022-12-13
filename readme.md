@@ -12,4 +12,7 @@
     <li>Delete some nodes (either on the path or using the bernoulli distribution, depending on the code that is being run) and color them red</li>
     <li>Repeat steps 3-5 until there are no paths to the target</li>
 </ol>
-
+<h2>Pretty stuff made during this project</h2>
+<img src="img2.png">
+<img src="img3.gif">
+<img src="img1.png">
